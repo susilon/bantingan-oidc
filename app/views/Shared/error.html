@@ -19,7 +19,7 @@
 	{elseif isset($SHOW_ERROR) && $SHOW_ERROR}
 		<div class="error-detail">
 			<b>Details:</b><br>
-			<pre style=" margin: 8px 0 0; white-space: pre-wrap; word-break: break-word;">{$errorException|@print_r}</pre>
+			<pre style=" margin: 8px 0 0; white-space: pre-wrap; word-break: break-word;">{$errorException|@json_encode:256}</pre>
 		</div>
 	{/if}
 {/block}
