@@ -1,0 +1,12 @@
+# OIDC Settings — used by SecureController
+# Provider discovery URL (without /.well-known/openid-configuration)
+# Example: https://keycloak.example.com/realms/demo or https://accounts.google.com
+oidc:
+  provider_url: https://auth.example.com/realms/demo
+  client_id: bantingan-oidc
+  client_secret: changeme
+  redirect_uri: http://localhost:8000/Secure/callback
+  scopes: openid email profile
+  post_logout_redirect_uri: http://localhost:8000/
+  verify_jwt: true
+  end_session_endpoint: ""

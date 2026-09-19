@@ -1,0 +1,12 @@
+{extends file="../Shared/layout.html"}
+{block name=htmlhead}
+<style>.error-card{max-width:700px;margin:24px auto;padding:16px;border:1px solid #e07a5f;border-radius:8px;background:#fff3f0}</style>
+{/block}
+{block name=bodycontent}
+<div class="error-card">
+  <h2>Authentication Error</h2>
+  <p style="color:#9d0208;">{$error|default:"Unknown error"}</p>
+  <p><a href="{$baseUrl}/Secure/login">Try again</a> · <a href="{$baseUrl}/">Home</a></p>
+</div>
+{/block}
+{block name=scriptfooter}{/block}

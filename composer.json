@@ -9,7 +9,8 @@
         }
     ],
     "require": {
-        "susilon/bantingan": "dev-php8-update8.5"
+        "susilon/bantingan": "dev-php8-update8.5",
+        "firebase/php-jwt": "^6"
     },
     "minimum-stability": "dev",
     "prefer-stable": false,

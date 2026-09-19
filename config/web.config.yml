@@ -23,3 +23,4 @@ application_settings :
 load_settings :
   route_settings : route.config.yml # Route configuration, for application path aliasing
   database_settings : database.config.yml # Database connection configuration, multiple database supported
+  oidc_settings : oidc.config.yml # OIDC provider configuration

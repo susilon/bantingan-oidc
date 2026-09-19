@@ -213,6 +213,7 @@ class HomeController extends Controller
 - Views storage path is defined by `application_settings.Views` - by default `app/views`.
 - Namespace must be `Controllers` for top-level controllers; for grouped controllers use sub-namespace e.g. `Controllers\Masters` for `app/controllers/Masters/ProvinceController.php`.
 - **Controllers must extend `Bantingan\Controller`** (e.g. `use Bantingan\Controller; class HomeController extends Controller`). All controller files should extend `Bantingan\Controller`.
+- **Every controller MUST have an `index()` method by default.** It is the default action when routing to `/Controller` or when no action is specified. It may either return a view (`return $this->view();`) or a simple response (`echo 'OK';`). Do not create a controller without `index()`.
 - **Models should extend `\Bantingan\Models`** when using built-in ORM (RedBeanPHP). Example: `class User extends \Bantingan\Models`. If not using built-in ORM, model may be plain PHP class without extending.
 - Class `HomeController` example extends `Bantingan\Controller` with `index()` returning `$this->view()`.
 

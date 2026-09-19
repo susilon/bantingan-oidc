@@ -1,0 +1,57 @@
+{extends file="../Shared/layout.html"}
+{block name=htmlhead}
+<style>
+.secure-card { max-width: 860px; margin: 24px auto; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+.secure-header { display:flex; justify-content:space-between; align-items:center; }
+.badge { background:#2d6a4f; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; }
+pre { background:#f6f8fa; padding:12px; overflow:auto; border-radius:6px; }
+table { border-collapse: collapse; width:100%; }
+table th, table td { border:1px solid #ddd; padding:8px; text-align:left; }
+</style>
+{/block}
+
+{block name=bodycontent}
+<div class="secure-card">
+  <div class="secure-header">
+    <h2>Secure Area</h2>
+    <span class="badge">OIDC Authenticated</span>
+  </div>
+  <p>Home remains public — this page required login and redirected to the Identity Provider first.</p>
+
+  {if $user}
+    <p><strong>Logged in as:</strong> {$user.email|default:$user.preferred_username|default:$user.sub} <a href="{$baseUrl}/Secure/logout" style="margin-left:12px;">Logout</a></p>
+
+    <h3>User Info (from ID Token / UserInfo — not persisted)</h3>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      {foreach $user as $k => $v}
+        <tr><td>{$k}</td><td>{if is_array($v) || is_object($v)}{$v|@json_encode}{else}{$v}{/if}</td></tr>
+      {/foreach}
+    </table>
+
+    {if $claims}
+      <h4 style="margin-top:16px;">ID Token Claims</h4>
+      <pre>{$claims|@json_encode:256}</pre>
+    {/if}
+
+    <h4>Raw User JSON</h4>
+    <pre>{$user|@json_encode:256}</pre>
+
+    {if $accessToken}
+      <h4>Access Token (truncated)</h4>
+      <pre>{$accessToken|truncate:80:"...":true}</pre>
+    {/if}
+  {else}
+    <p>Not authenticated — <a href="{$baseUrl}/Secure/login">Login with OIDC</a></p>
+  {/if}
+
+  <hr>
+  <p><a href="{$baseUrl}/">← Back to Home (public)</a> · <a href="{$baseUrl}/Secure/login">Re-login</a></p>
+</div>
+{/block}
+
+{block name=scriptfooter}
+<script>
+  console.log('Secure view loaded', appName);
+</script>
+{/block}
