@@ -1,0 +1,13 @@
+{
+	{$CADDY_GLOBAL_OPTIONS}
+}
+
+:80 {
+	root * /app
+	php_server
+	encode gzip
+	file_server
+	log {
+		output stdout
+	}
+}

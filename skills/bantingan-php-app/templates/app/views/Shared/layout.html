@@ -1,0 +1,25 @@
+{assign applicationSettings $smarty.const.APPLICATION_SETTINGS}
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>{$pageTitle|default:$siteTitle}</title>
+
+{block name=htmlhead}{/block}
+</head>
+<body>
+	<p class="main_head">Welcome</p>
+	
+{block name=bodycontent}{/block}
+<hr>
+{$variableFromController1}
+<br>
+	<p class="footer">{$applicationSettings.AppDescription} - v{$applicationSettings.AppVersion} Powered By Bantingan</p>
+
+<script>
+	/* main javascript block */
+	var appName = '{$applicationSettings.SiteTitle}';
+</script>
+{block name=scriptfooter}{/block}
+</body>
+</html> 

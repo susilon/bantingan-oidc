@@ -1,0 +1,89 @@
+# Dependencies
+/vendor/
+composer.phar
+
+# Bantingan runtime / Smarty compile
+/templates_c/
+/tmp/
+/tmp/*
+/cache/
+/cache/*
+/uploads/
+/uploads/*
+/public/uploads/
+/storage/
+/logs/
+*.log
+*.cache
+
+# Environment & secrets - Framework supports BANTINGAN3_ env overrides (src/Settings.php:44)
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Database credentials - multiple DB supported (src/Model.php:43)
+# Keep example tracked, ignore real credentials
+/config/database.config.yml
+/config/*.local.yml
+/config/database.local.yml
+# keep example
+!config/database.config.yml.example
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Icon?
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Node (if frontend tooling)
+/node_modules/
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+/bun.lockb
+
+# Docker overrides - keep base files, ignore local overrides
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+docker/mysql/data/
+docker/mysql/*.sql
+
+# Build artifacts
+/build/
+/dist/
+/coverage/
+.phpunit.result.cache
+.phpunit.cache/
+.php_cs.cache
+.php-cs-fixer.cache
+clover.xml
+coverage.xml
+
+# Keep templates/scaffold source but ignore symlinked clones (canonical is skills/)
+# .claude/.codex/.opencode/.agents are symlinks -> ../../skills/bantingan-php-app
+# Do not ignore them, but ignore their caches
+.opencode/node_modules/
+.opencode/package-lock.json
+
+# Misc
+*.bak
+*.tmp
+*.orig

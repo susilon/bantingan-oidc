@@ -1,0 +1,17 @@
+{extends file="../Shared/layout.html"}
+{block name=htmlhead}
+<!-- this will be at head block-->
+{/block}
+
+{block name=bodycontent}
+<hr>
+{$variableFromController2}
+<!-- this will be at body content block-->
+{/block}
+
+{block name=scriptfooter}
+<!-- this will be at script footer block-->
+ <script>
+	alert('Welcome to ' + appName);
+ </script>
+{/block} 

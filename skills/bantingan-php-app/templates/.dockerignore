@@ -1,0 +1,15 @@
+.git
+.gitignore
+vendor/
+node_modules/
+tmp/
+uploads/
+templates_c/
+*.md
+docker-compose.yml
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+*.log

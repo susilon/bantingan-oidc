@@ -1,0 +1,25 @@
+{
+    "name": "app/bantingan-app",
+    "description": "My Bantingan App",
+    "type": "project",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/susilon/bantingan.git"
+        }
+    ],
+    "require": {
+        "susilon/bantingan": "dev-php8-update8.5"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": false,
+    "config": {
+        "github-protocols": ["https"]
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Modules\\": "modules/"
+        }
+    }
+}

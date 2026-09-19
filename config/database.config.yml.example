@@ -1,0 +1,23 @@
+# default database
+default: 
+  type: mysql
+  server: mysql
+  user: user
+  password: user
+  database: appusermanagement
+
+# second database, for example for user management
+usermanagement: 
+  type: mysql
+  server: mysql
+  user: user
+  password: user
+  database: user
+
+# additional setting as needed
+mongodb: 
+  type: mongo
+  server: azure.susilon.com:9017
+  user: root
+  password: root
+  database: root

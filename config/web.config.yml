@@ -1,0 +1,25 @@
+# Basic application settings
+application_settings :
+  SiteTitle : Bantingan App # Site Title variable as default Page Title, set $pageTitle viewbag at controller to override
+  Controllers : app/controllers # Location of controllers file
+  Models : app/models # Location of models file
+  Views : app/views # Location of views file  
+  Module : modules # Location of module file
+  BaseUrl : # Application base path  
+  DefaultController: Home # default controller
+  RedBeanPHP_Freeze : false  # RedbeanPHP freeze settings, set true to disable auto create table/columns
+  SharedViewFolder : Shared/ # For storing common html files for ex : error.html
+  ErrorFileTemplate : error.html # HTML file to return when error occured
+  Session_DB: false # Session data stored in DB
+  Cookie_Secret_Key: abcdefg
+  Cookie_Runtime : 
+  Cookie_Domain : 
+  Language : en # Default Language file to use in language directory, to override, set l in querystings, ex: ?l=id, to load id.php as language file
+  ShowRoutingError : true
+  AppVersion : 1.0.0
+  AppDescription : My Bantingan App
+
+# Separated settings file to load, settings_name: yaml_settings_file_name
+load_settings :
+  route_settings : route.config.yml # Route configuration, for application path aliasing
+  database_settings : database.config.yml # Database connection configuration, multiple database supported
