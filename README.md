@@ -36,7 +36,7 @@ Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Fr
 
 **Core artifacts:**
 
-- **OP (OpenID Provider):** the IdP — Authentik (`auth.piapiastudio.web.id`), Keycloak, Auth0, Entra ID. Issues tokens.
+- **OP (OpenID Provider):** the IdP — Authentik, Keycloak, Auth0, Entra ID. Issues tokens.
 - **RP (Relying Party):** this app — trusts the OP, validates tokens.
 - **ID Token:** JWT with `iss`, `aud`, `sub`, `exp`, `nonce`. Signed by OP (JWKS).
 - **Access Token:** for calling APIs / `userinfo`.
@@ -84,7 +84,7 @@ sequenceDiagram
     B->>R: GET /Secure (index)
     R->>R: No session → 302 /Secure/login
     R->>R: Generate state, nonce, PKCE verifier/challenge
-    R-->>B: 302 https://auth.piapiastudio.web.id/application/o/authorize/?...&state=...&nonce=...&code_challenge=...
+    R-->>B: 302 https://auth.example.com/application/o/authorize/?...&state=...&nonce=...&code_challenge=...
     B->>OP: GET /authorize
     OP->>B: Login page
     B->>OP: POST credentials
@@ -113,7 +113,7 @@ sequenceDiagram
 
     B->>R: GET /Secure/logout
     R->>R: Destroy session
-    R-->>B: 302 https://auth.piapiastudio.web.id/application/o/bantingan-oidc/end-session/?id_token_hint=...&post_logout_redirect_uri=https://app/
+    R-->>B: 302 https://auth.example.com/application/o/bantingan-oidc/end-session/?id_token_hint=...&post_logout_redirect_uri=https://app/
     B->>OP: Clear SSO cookie
     OP-->>B: 302 https://app/
 ```
@@ -133,7 +133,7 @@ Token validation uses `firebase/php-jwt` + `JWK::parseKeySet` against `jwks_uri`
 | Auth | `firebase/php-jwt` `^6` (JWKS verify), cURL (no `curl_close()` — deprecated in 8.5) |
 | DB | MySQL (`default: appusermanagement`, `usermanagement: user`), MongoDB (`azure.susilon.com:9017`) |
 | Template | Smarty 4 with space-after-`{` rule (`app/views/Shared/layout.html`) |
-| Provider | Authentik at `https://auth.piapiastudio.web.id/application/o/bantingan-oidc/` |
+| Provider | Authentik at `https://auth.example.com/application/o/bantingan-oidc/` |
 
 ---
 
@@ -142,7 +142,7 @@ Token validation uses `firebase/php-jwt` + `JWK::parseKeySet` against `jwks_uri`
 ### Prerequisites
 
 - PHP 8.5 + Composer or Docker
-- Authentik provider configured (issuer `https://auth.piapiastudio.web.id/application/o/bantingan-oidc/`)
+- Authentik provider configured (issuer `https://auth.example.com/application/o/bantingan-oidc/`)
 
 ### 1. Docker (recommended)
 
@@ -185,8 +185,8 @@ Canonical `skills/` symlinked to `.claude/.codex/.opencode/.agents/skills`:
 
 ```yaml
 oidc:
-  provider_url: https://auth.piapiastudio.web.id/application/o/bantingan-oidc
-  client_id: RDkMniiI5Fx3n1mUf1No3hU4PpLhggD37Z8APJs9
+  provider_url: https://auth.example.com/application/o/bantingan-oidc
+  client_id: your-client-id
   client_secret: <secret> # use OIDC_CLIENT_SECRET env in prod
   redirect_uri: http://localhost:8000/Secure/callback  # or http://localhost/Secure/callback for Docker
   scopes: openid email profile
@@ -195,9 +195,9 @@ oidc:
 ```
 
 **Provider notes (Authentik):**
-- Discovery: `GET {provider_url}/.well-known/openid-configuration` → `200` with `authorization_endpoint: .../o/authorize/`, `token_endpoint`, `jwks_uri`
-- Previously failed with bare `https://auth.piapiastudio.web.id/.well-known/openid-configuration` → `404` → fixed to `/application/o/bantingan-oidc`
-- `redirect_uri` must exactly match **Redirect URIs** in Authentik Provider settings (mismatch → `invalid redirect_uri`). Add both `http://localhost:8000/Secure/callback` and `http://localhost/Secure/callback` or use `BANTINGAN3_OIDC` env override.
+- Discovery: `GET {provider_url}/.well-known/openid-configuration` → `200` with `authorization_endpoint`, `token_endpoint`, `jwks_uri`
+- For Authentik the `provider_url` must include `/application/o/<app-slug>` (e.g. `https://auth.example.com/application/o/bantingan-oidc`), bare domain returns `404`
+- `redirect_uri` must exactly match **Redirect URIs** in Provider settings (mismatch → `invalid redirect_uri`). Add both `http://localhost:8000/Secure/callback` and `http://localhost/Secure/callback` or use `BANTINGAN3_OIDC` env override.
 
 ---
 
