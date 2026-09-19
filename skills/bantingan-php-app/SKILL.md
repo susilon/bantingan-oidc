@@ -389,4 +389,5 @@ Copy from templates when available, fallback to inline content above.
 - Default controller/view are minimal working example - HomeController maps to DefaultController: Home in web.config.yml.
 - Bantingan stores controllers in `application_settings.Controllers` (default `app/controllers`), models in `application_settings.Models` (default `app/models`), views in `application_settings.Views` (default `app/views`). Always respect these settings when adding files.
 - Views are resolved automatically by `$this->view()` as `Views/[Controller]/[Action].html` (e.g. `HomeController::index()` → `Home/index.html`, `Masters\ProvinceController::index()` → `Masters/Province/index.html`). Do not pass explicit view path unless overriding default.
+- **Views + Smarty + JavaScript:** Smarty parses `{...}` as template tags. When creating views containing JavaScript, **always add a space after every `{`** (e.g. `if (x) { console.log(...)}`, `let o = { key: 1}`, `function f() { return ...}`) so Smarty does not conflict. Alternatively wrap JS blocks with `{literal}...{/literal}`, but the space-after-`{` rule is preferred.
 
