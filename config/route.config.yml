@@ -1,0 +1,5 @@
+# namespaces
+demo:
+  path: /demo
+  namespace: Demo
+  wildcard: true
