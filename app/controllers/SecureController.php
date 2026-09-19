@@ -339,7 +339,6 @@ class SecureController extends Controller
         ]);
         $resp = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
         if ($code >= 200 && $code < 300 && $resp) {
             $data = json_decode($resp, true);
             return is_array($data) ? $data : null;
@@ -359,7 +358,6 @@ class SecureController extends Controller
         ]);
         $resp = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
         $data = json_decode($resp ?? '', true);
         if (is_array($data)) {
             return $data;
@@ -378,7 +376,6 @@ class SecureController extends Controller
         ]);
         $resp = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
         if ($code >= 200 && $code < 300) {
             $data = json_decode($resp, true);
             return is_array($data) ? $data : null;
