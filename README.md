@@ -191,8 +191,6 @@ oidc:
 | `callback()` | `GET /Secure/callback?code=&state=` | Validates `state`, POSTs to `token_endpoint` (`code_verifier`), verifies `id_token` via `firebase/php-jwt` + `JWK::parseKeySet(jwks_uri)`, checks `nonce`/`iss`/`aud`/`exp`, fetches `userinfo_endpoint` with `access_token`, stores `$_SESSION['oidc_user']` |
 | `logout()` | `GET /Secure/logout` | Destroys session, `302` to `end_session_endpoint?id_token_hint=...&post_logout_redirect_uri=...` |
 
-Views: `app/views/Secure/index.html:1` (table + `<pre>` JSON), `app/views/Secure/error.html:3` (CSS ` { ` spaced).
-
 ---
 
 ## Security Notes
@@ -201,7 +199,6 @@ Views: `app/views/Secure/index.html:1` (table + `<pre>` JSON), `app/views/Secure
 - Cache discovery/JWKS 10 min (`$_SESSION`).
 - Always `state` + `PKCE`; store server-side, not cookie.
 - `verify_jwt: true` in prod; requires `firebase/php-jwt`.
-- `curl_close()` removed (no-op since PHP 8.0, deprecated 8.5) — `SecureController.php:340` now just `curl_exec`/`curl_getinfo`.
 - Secrets via `OIDC_CLIENT_SECRET` env or `BANTINGAN3_OIDC` JSON, never commit `config/oidc.config.yml`.
 
 ---
