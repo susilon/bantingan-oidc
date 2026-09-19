@@ -10,13 +10,10 @@ Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Fr
 
 - [What is OIDC?](#what-is-oidc)
 - [How the Flow Works](#how-the-flow-works)
-- [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
 - [OIDC Configuration](#oidc-configuration)
 - [Implemented Controllers](#implemented-controllers)
-- [Modern Layout](#modern-layout)
 - [Security Notes](#security-notes)
-- [Skills](#skills)
 - [Roadmap](#roadmap)
 - [License](#license)
 
@@ -122,21 +119,6 @@ Token validation uses `firebase/php-jwt` + `JWK::parseKeySet` against `jwks_uri`
 
 ---
 
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Framework | `susilon/bantingan` `dev-php8-update8.5` (MVC, Smarty, Symfony Routing) |
-| Runtime | FrankenPHP 1 + Caddy (`Dockerfile` + `Caddyfile`) |
-| Language | PHP 8.5 |
-| ORM | `gabordemooij/redbean` (multi-DB via `R::addDatabase`) |
-| Auth | `firebase/php-jwt` `^6` (JWKS verify), cURL (no `curl_close()` — deprecated in 8.5) |
-| DB | MySQL (`default: appusermanagement`, `usermanagement: user`), MongoDB (`azure.susilon.com:9017`) |
-| Template | Smarty 4 with space-after-`{` rule (`app/views/Shared/layout.html`) |
-| Provider | Authentik at `https://auth.example.com/application/o/bantingan-oidc/` |
-
----
-
 ## Quick Start
 
 ### Prerequisites
@@ -166,13 +148,6 @@ composer install
 php -S localhost:8000
 open http://localhost:8000/
 open http://localhost:8000/Secure # → login first, then user JSON
-```
-
-### 3. Skills (optional)
-
-Canonical `skills/` symlinked to `.claude/.codex/.opencode/.agents/skills`:
-```bash
-./scripts/sync-skills.sh  # Windows fallback (cp -R)
 ```
 
 ---
@@ -209,8 +184,6 @@ oidc:
 
 **`SecureController` (`app/controllers/SecureController.php:1`) — protected OIDC**
 
-Every controller has `index()` by skill rule (`skills/bantingan-php-app/SKILL.md:212`).
-
 | Method | Route | Behavior |
 |---|---|---|
 | `index()` | `GET /Secure` | Checks `$_SESSION['oidc_user']`, redirects to `login` if missing, else `viewBag->user/claims` → `app/views/Secure/index.html` (displays `userinfo` JSON, no DB persistence) |
@@ -222,12 +195,6 @@ Views: `app/views/Secure/index.html:1` (table + `<pre>` JSON), `app/views/Secure
 
 ---
 
-## Modern Layout
-
-`app/views/Shared/layout.html:1` — sticky blurred topbar, brand `B`, `Home`/`Secure` nav with active state `BANTINGAN_CONTROLLER_NAME`, `card` (`--radius:14px`, `--shadow`), responsive `1080px` container, CSS variables, system font. All CSS/JS respects **space-after-`{`** to avoid Smarty parse (`:root {  --bg`, `* {  box-sizing`, etc.). `app/views/Shared/error.html:8` also fixed `video{ border:0` → `video{ border:0`.
-
----
-
 ## Security Notes
 
 - Validate `iss == provider_url`, `aud == client_id`, `exp` not expired, `nonce` matches.
@@ -236,16 +203,6 @@ Views: `app/views/Secure/index.html:1` (table + `<pre>` JSON), `app/views/Secure
 - `verify_jwt: true` in prod; requires `firebase/php-jwt`.
 - `curl_close()` removed (no-op since PHP 8.0, deprecated 8.5) — `SecureController.php:340` now just `curl_exec`/`curl_getinfo`.
 - Secrets via `OIDC_CLIENT_SECRET` env or `BANTINGAN3_OIDC` JSON, never commit `config/oidc.config.yml`.
-
----
-
-## Skills
-
-Bantingan skill `skills/bantingan-php-app/SKILL.md:391`:
-
-- Every controller **must** have `index()` (return `view()` or `echo 'OK'`).
-- Views with JS/CSS **must add space after `{`** (e.g. `if (x) { console.log...}`, `let o = { key: 1}`) to avoid Smarty conflict. Alternative `{literal}` allowed but space preferred.
-- Canonical `skills/` → symlinks `.claude/.codex/.opencode/.agents/skills` + `scripts/sync-skills.sh` for Windows.
 
 ---
 
