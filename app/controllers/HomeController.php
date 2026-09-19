@@ -29,7 +29,7 @@ class HomeController extends Controller
 {
     public function index()	
     {                           
-        $this->viewBag->variableFromController1 = 'Check the app folder to see the code';
+        $this->viewBag->variableFromController1 = 'Check the app folder and see the code how this message set.';
         $this->viewBag->variableFromController2 = 'Your page is generated';
         return $this->view();
     }
