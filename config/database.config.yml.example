@@ -2,9 +2,9 @@
 default: 
   type: mysql
   server: mysql
-  user: user
+  user: appdb
   password: user
-  database: appusermanagement
+  database: appdb
 
 # second database, for example for user management
 usermanagement: 
@@ -12,12 +12,12 @@ usermanagement:
   server: mysql
   user: user
   password: user
-  database: user
+  database: userdb
 
 # additional setting as needed
 mongodb: 
   type: mongo
-  server: azure.susilon.com:9017
+  server: mongodb
   user: root
   password: root
-  database: root
+  database: transdb

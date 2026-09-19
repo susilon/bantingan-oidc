@@ -2,7 +2,7 @@
 # Provider discovery URL (without /.well-known/openid-configuration)
 # Example: https://keycloak.example.com/realms/demo or https://accounts.google.com
 oidc:
-  provider_url: https://auth.piapiastudio.web.id/application/o/bantingan-oidc
+  provider_url: https://accounts.google.com
   client_id: bantingan-oidc
   client_secret: changeme
   redirect_uri: http://localhost:8000/Secure/callback
