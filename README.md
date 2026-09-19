@@ -1,8 +1,8 @@
 # Bantingan OIDC Demo
 
-Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Framework** (`susilon/bantingan` `dev-php8-update8.5`). A minimal, dockerized reference for plugging an OIDC Identity Provider (Keycloak, Auth0, Azure AD, Google) into a Bantingan MVC app (FrankenPHP + Caddy).
+Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Framework** (`susilon/bantingan` `dev-php8-update8.5`). A minimal, dockerized reference for plugging an OIDC Identity Provider (Authentik, Keycloak, Auth0, Azure AD, Google) into a Bantingan MVC app (FrankenPHP + Caddy).
 
-> **Repo:** `susilon/bantingan-oidc` · **Framework:** [susilon/bantingan](https://github.com/susilon/bantingan) · **Stack:** PHP 8.5 / FrankenPHP / Caddy / MySQL / MongoDB / RedBeanPHP / Smarty
+> **Repo:** `susilon/bantingan-oidc` · **Framework:** [susilon/bantingan](https://github.com/susilon/bantingan) · **Stack:** PHP 8.5 / FrankenPHP / Caddy / MySQL / MongoDB / RedBeanPHP / Smarty / firebase/php-jwt
 
 ---
 
@@ -12,8 +12,11 @@ Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Fr
 - [How the Flow Works](#how-the-flow-works)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
-- [Implementing OIDC in Bantingan](#implementing-oidc-in-bantingan)
+- [OIDC Configuration](#oidc-configuration)
+- [Implemented Controllers](#implemented-controllers)
+- [Modern Layout](#modern-layout)
 - [Security Notes](#security-notes)
+- [Skills](#skills)
 - [Roadmap](#roadmap)
 - [License](#license)
 
@@ -33,7 +36,7 @@ Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Fr
 
 **Core artifacts:**
 
-- **OP (OpenID Provider):** the IdP — Keycloak, Auth0, Entra ID. Issues tokens.
+- **OP (OpenID Provider):** the IdP — Authentik (`auth.piapiastudio.web.id`), Keycloak, Auth0, Entra ID. Issues tokens.
 - **RP (Relying Party):** this app — trusts the OP, validates tokens.
 - **ID Token:** JWT with `iss`, `aud`, `sub`, `exp`, `nonce`. Signed by OP (JWKS).
 - **Access Token:** for calling APIs / `userinfo`.
@@ -67,37 +70,37 @@ flowchart LR
     RP -- "7. Fetch /userinfo with access_token" --> OP
 ```
 
-### 2. Authorization Code Flow with PKCE (recommended — this demo)
+### 2. Authorization Code Flow with PKCE (this demo — `SecureController`)
 
-The only flow you should use for web apps. No client secret in browser; PKCE prevents code interception.
+PKCE prevents code interception; no client secret in browser.
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
-    participant R as Bantingan RP<br/>(HomeController / AuthController)
+    participant R as Bantingan RP<br/>(SecureController)
     participant OP as OIDC Provider
     participant J as OP JWKS
 
-    B->>R: GET /auth/login
-    R->>R: Generate state, nonce, PKCE code_verifier + code_challenge
-    R->>R: Store state/nonce/verifier in session (or DB via Session_DB)
-    R-->>B: 302 Location: https://op/authorize?client_id=...&redirect_uri=https://app/callback&response_type=code&scope=openid+email+profile&state=...&nonce=...&code_challenge=...&code_challenge_method=S256
+    B->>R: GET /Secure (index)
+    R->>R: No session → 302 /Secure/login
+    R->>R: Generate state, nonce, PKCE verifier/challenge
+    R-->>B: 302 https://auth.piapiastudio.web.id/application/o/authorize/?...&state=...&nonce=...&code_challenge=...
     B->>OP: GET /authorize
     OP->>B: Login page
-    B->>OP: POST credentials (+ consent)
-    OP-->>B: 302 Location: https://app/callback?code=AUTH_CODE&state=...
-    B->>R: GET /auth/callback?code=...&state=...
-    R->>R: Verify state matches session
-    R->>OP: POST /token {grant_type=authorization_code, code, code_verifier, client_id, redirect_uri}
-    OP-->>R: {id_token (JWT), access_token, refresh_token, expires_in}
-    R->>J: GET /.well-known/jwks.json (cache)
-    R->>R: Validate id_token: iss, aud, exp, nonce, signature (JWKS)
-    R->>OP: GET /userinfo Authorization: Bearer access_token
-    OP-->>R: {sub, email, name, ...}
-    R->>R: Create/find user in DB (usermanagement / default), set session
-    R-->>B: 302 / (Set-Cookie: BANTINGAN_SESSID)
-    B->>R: GET / (Cookie)
-    R-->>B: 200 Authenticated page (viewBag.user)
+    B->>OP: POST credentials
+    OP-->>B: 302 https://app/Secure/callback?code=...&state=...
+    B->>R: GET /Secure/callback?code=...&state=...
+    R->>R: Verify state
+    R->>OP: POST /token {code, code_verifier, client_id, redirect_uri}
+    OP-->>R: {id_token, access_token}
+    R->>J: GET /jwks/
+    R->>R: Verify iss/aud/exp/nonce/signature (firebase/php-jwt)
+    R->>OP: GET /userinfo Bearer access_token
+    OP-->>R: {sub, email, ...}
+    R->>R: $_SESSION['oidc_user'] = userinfo (no DB per demo)
+    R-->>B: 302 /Secure
+    B->>R: GET /Secure (Cookie)
+    R-->>B: 200 Secure/index.html with user JSON
 ```
 
 ### 3. Logout
@@ -108,14 +111,14 @@ sequenceDiagram
     participant R as Bantingan RP
     participant OP as OP
 
-    B->>R: GET /auth/logout
-    R->>R: Destroy local session
-    R-->>B: 302 https://op/logout?id_token_hint=...&post_logout_redirect_uri=https://app/
-    B->>OP: OP clears SSO cookie
+    B->>R: GET /Secure/logout
+    R->>R: Destroy session
+    R-->>B: 302 https://auth.piapiastudio.web.id/application/o/bantingan-oidc/end-session/?id_token_hint=...&post_logout_redirect_uri=https://app/
+    B->>OP: Clear SSO cookie
     OP-->>B: 302 https://app/
 ```
 
-**Token validation in Bantingan** will use `firebase/php-jwt` or `jumbojett/openid-connect-php` against `jwks_uri` from discovery; never trust the JWT without signature + `iss`/`aud`/`exp`/`nonce` checks.
+Token validation uses `firebase/php-jwt` + `JWK::parseKeySet` against `jwks_uri`; never trust `iss`/`aud`/`exp`/`nonce` unchecked.
 
 ---
 
@@ -124,13 +127,13 @@ sequenceDiagram
 | Layer | Choice |
 |---|---|
 | Framework | `susilon/bantingan` `dev-php8-update8.5` (MVC, Smarty, Symfony Routing) |
-| Runtime | FrankenPHP 1 + Caddy |
+| Runtime | FrankenPHP 1 + Caddy (`Dockerfile` + `Caddyfile`) |
 | Language | PHP 8.5 |
-| ORM | `gabordemooij/redbean` |
-| Auth lib (planned) | `jumbojett/openid-connect-php` or `firebase/php-jwt` + `guzzlehttp/guzzle` |
-| DB | MySQL (default), MongoDB |
-| Template | Smarty 4 |
-| Docker | `dunglas/frankenphp:1-php8.5` |
+| ORM | `gabordemooij/redbean` (multi-DB via `R::addDatabase`) |
+| Auth | `firebase/php-jwt` `^6` (JWKS verify), cURL (no `curl_close()` — deprecated in 8.5) |
+| DB | MySQL (`default: appusermanagement`, `usermanagement: user`), MongoDB (`azure.susilon.com:9017`) |
+| Template | Smarty 4 with space-after-`{` rule (`app/views/Shared/layout.html`) |
+| Provider | Authentik at `https://auth.piapiastudio.web.id/application/o/bantingan-oidc/` |
 
 ---
 
@@ -138,170 +141,124 @@ sequenceDiagram
 
 ### Prerequisites
 
-- PHP 8.5 + Composer, or Docker
-- An OIDC provider (Keycloak locally, or Auth0/Entra ID). For pure scaffolding the app runs without OIDC.
+- PHP 8.5 + Composer or Docker
+- Authentik provider configured (issuer `https://auth.piapiastudio.web.id/application/o/bantingan-oidc/`)
 
 ### 1. Docker (recommended)
 
 ```bash
 cp config/database.config.yml.example config/database.config.yml
-# edit config/database.config.yml and config/web.config.yml as needed
-
+cp config/oidc.config.yml.example config/oidc.config.yml
+# edit both — see OIDC Configuration below
 docker build -t bantingan-oidc .
 docker run -p 80:80 bantingan-oidc
-# or with docker compose (if you add compose.yml)
-
-open http://localhost/
-open http://localhost/Home/health  # -> ok
+open http://localhost/              # Home — public
+open http://localhost/Secure      # → redirects to Authentik login
+open http://localhost/Home/health # → ok
 ```
 
 ### 2. Local PHP
 
 ```bash
 cp config/database.config.yml.example config/database.config.yml
+cp config/oidc.config.yml.example config/oidc.config.yml
 composer install
 php -S localhost:8000
 open http://localhost:8000/
+open http://localhost:8000/Secure # → login first, then user JSON
 ```
 
 ### 3. Skills (optional)
 
-Canonical source is `skills/`. Symlinks are already set up for Claude/Codex/Opencode/Agents. On Windows:
-
+Canonical `skills/` symlinked to `.claude/.codex/.opencode/.agents/skills`:
 ```bash
-./scripts/sync-skills.sh
+./scripts/sync-skills.sh  # Windows fallback (cp -R)
 ```
 
 ---
 
-## Implementing OIDC in Bantingan
+## OIDC Configuration
 
-> Current `app/controllers/HomeController.php:14` is a scaffold. Below is the intended OIDC integration — copy as `app/controllers/AuthController.php`.
+`config/web.config.yml:load_settings` now loads `oidc_settings: oidc.config.yml` → `OIDC_SETTINGS` constant (`src/Settings.php:55`).
 
-#### 1. Install OIDC client
-
-```bash
-composer require jumbojett/openid-connect-php firebase/php-jwt guzzlehttp/guzzle
-```
-
-#### 2. Add config (`config/oidc.config.yml` + wire in `web.config.yml:load_settings`)
+`config/oidc.config.yml` (gitignored, see `/.gitignore:28`):
 
 ```yaml
 oidc:
-  provider_url: https://keycloak.example.com/realms/demo
-  client_id: bantingan-oidc
-  client_secret: ${OIDC_CLIENT_SECRET}
-  redirect_url: https://app.example.com/auth/callback
+  provider_url: https://auth.piapiastudio.web.id/application/o/bantingan-oidc
+  client_id: RDkMniiI5Fx3n1mUf1No3hU4PpLhggD37Z8APJs9
+  client_secret: <secret> # use OIDC_CLIENT_SECRET env in prod
+  redirect_uri: http://localhost:8000/Secure/callback  # or http://localhost/Secure/callback for Docker
   scopes: openid email profile
-  post_logout_redirect: https://app.example.com/
+  post_logout_redirect_uri: http://localhost:8000/
+  verify_jwt: true
 ```
 
-#### 3. Controller sketch
+**Provider notes (Authentik):**
+- Discovery: `GET {provider_url}/.well-known/openid-configuration` → `200` with `authorization_endpoint: .../o/authorize/`, `token_endpoint`, `jwks_uri`
+- Previously failed with bare `https://auth.piapiastudio.web.id/.well-known/openid-configuration` → `404` → fixed to `/application/o/bantingan-oidc`
+- `redirect_uri` must exactly match **Redirect URIs** in Authentik Provider settings (mismatch → `invalid redirect_uri`). Add both `http://localhost:8000/Secure/callback` and `http://localhost/Secure/callback` or use `BANTINGAN3_OIDC` env override.
 
-```php
-<?php
-namespace Controllers;
+---
 
-use Bantingan\Controller;
-use Jumbojett\OpenIDConnectClient;
+## Implemented Controllers
 
-class AuthController extends Controller
-{
-    private function oidc(): OpenIDConnectClient
-    {
-        $c = OIDC_SETTINGS; // loaded via Settings::LoadFromPath
-        $oidc = new OpenIDConnectClient($c['provider_url'], $c['client_id'], $c['client_secret']);
-        $oidc->setRedirectURL($c['redirect_url']);
-        $oidc->addScope($c['scopes']);
-        $oidc->setResponseTypes(['code']);
-        $oidc->usePKCE();
-        return $oidc;
-    }
+**`HomeController` (`app/controllers/HomeController.php:14`) — public**
+- `index()` → `$this->view()` → `app/views/Home/index.html`
+- `health()` → `echo 'ok'`
 
-    public function login()
-    {
-        $oidc = $this->oidc();
-        // state/nonce/PKCE handled by library; stored in session
-        $oidc->authenticate();
-    }
+**`SecureController` (`app/controllers/SecureController.php:1`) — protected OIDC**
 
-    public function callback()
-    {
-        $oidc = $this->oidc();
-        $oidc->authenticate(); // validates code, state, nonce
+Every controller has `index()` by skill rule (`skills/bantingan-php-app/SKILL.md:212`).
 
-        $claims = $oidc->getVerifiedClaims(); // id_token payload
-        // Validate iss/aud/exp already done; optionally re-validate with firebase/php-jwt + JWKS
+| Method | Route | Behavior |
+|---|---|---|
+| `index()` | `GET /Secure` | Checks `$_SESSION['oidc_user']`, redirects to `login` if missing, else `viewBag->user/claims` → `app/views/Secure/index.html` (displays `userinfo` JSON, no DB persistence) |
+| `login()` | `GET /Secure/login` | Discovers via `provider_url/.well-known/openid-configuration`, generates `state/nonce/PKCE verifier/challenge S256`, stores in session, `302` to `authorization_endpoint` |
+| `callback()` | `GET /Secure/callback?code=&state=` | Validates `state`, POSTs to `token_endpoint` (`code_verifier`), verifies `id_token` via `firebase/php-jwt` + `JWK::parseKeySet(jwks_uri)`, checks `nonce`/`iss`/`aud`/`exp`, fetches `userinfo_endpoint` with `access_token`, stores `$_SESSION['oidc_user']` |
+| `logout()` | `GET /Secure/logout` | Destroys session, `302` to `end_session_endpoint?id_token_hint=...&post_logout_redirect_uri=...` |
 
-        // Upsert user into usermanagement DB
-        $user = new \Models\UserModel();
-        $user->selectedDB = 'usermanagement';
-        $bean = $user->findOrCreate(['sub' => $claims->sub]);
-        $bean->email = $claims->email;
-        $bean->name  = $claims->name ?? $claims->preferred_username;
-        $user->save($bean);
+Views: `app/views/Secure/index.html:1` (table + `<pre>` JSON), `app/views/Secure/error.html:3` (CSS ` { ` spaced).
 
-        $_SESSION['user'] = (array)$claims;
-        $_SESSION['id_token'] = $oidc->getIdToken();
-        $this->redirect('/');
-    }
+---
 
-    public function logout()
-    {
-        $idToken = $_SESSION['id_token'] ?? null;
-        session_destroy();
-        $oidc = $this->oidc();
-        $oidc->signOut($idToken, OIDC_SETTINGS['post_logout_redirect']);
-    }
-}
-```
+## Modern Layout
 
-#### 4. Protect routes
-
-In a base controller or middleware:
-
-```php
-protected function requireAuth()
-{
-    if (empty($_SESSION['user'])) {
-        $this->redirect('/auth/login');
-    }
-}
-```
-
-#### 5. Views
-
-Set `$this->viewBag->user = $_SESSION['user']` and render in `app/views/Shared/layout.html`:
-
-```smarty
-{if $user}
-  <span>{$user.email}</span> <a href="/auth/logout">Logout</a>
-{else}
-  <a href="/auth/login">Login with OIDC</a>
-{/if}
-```
+`app/views/Shared/layout.html:1` — sticky blurred topbar, brand `B`, `Home`/`Secure` nav with active state `BANTINGAN_CONTROLLER_NAME`, `card` (`--radius:14px`, `--shadow`), responsive `1080px` container, CSS variables, system font. All CSS/JS respects **space-after-`{`** to avoid Smarty parse (`:root {  --bg`, `* {  box-sizing`, etc.). `app/views/Shared/error.html:8` also fixed `video{ border:0` → `video{ border:0`.
 
 ---
 
 ## Security Notes
 
-- **Validate every field:** `iss` matches `provider_url`, `aud` == `client_id`, `exp` not expired, `nonce` matches session.
-- **JWKS caching:** Cache `/.well-known/openid-configuration` and `jwks_uri` for 10–60 min.
-- **State + PKCE:** Always use both; store `state`/`nonce`/`code_verifier` in server session, not cookie.
-- **HTTPS only:** OIDC `redirect_uri` must be HTTPS in production.
-- **Session:** Consider `APPLICATION_SETTINGS.Session_DB=true` with `Modules\Common\Session\MongoSession` (`index.php:10`) for clustered deployments.
-- **Secrets:** Keep `client_secret` in `.env` or `BANTINGAN3_OIDC` env, never in `database.config.yml.example`.
+- Validate `iss == provider_url`, `aud == client_id`, `exp` not expired, `nonce` matches.
+- Cache discovery/JWKS 10 min (`$_SESSION`).
+- Always `state` + `PKCE`; store server-side, not cookie.
+- `verify_jwt: true` in prod; requires `firebase/php-jwt`.
+- `curl_close()` removed (no-op since PHP 8.0, deprecated 8.5) — `SecureController.php:340` now just `curl_exec`/`curl_getinfo`.
+- Secrets via `OIDC_CLIENT_SECRET` env or `BANTINGAN3_OIDC` JSON, never commit `config/oidc.config.yml`.
+
+---
+
+## Skills
+
+Bantingan skill `skills/bantingan-php-app/SKILL.md:391`:
+
+- Every controller **must** have `index()` (return `view()` or `echo 'OK'`).
+- Views with JS/CSS **must add space after `{`** (e.g. `if (x) { console.log...}`, `let o = { key: 1}`) to avoid Smarty conflict. Alternative `{literal}` allowed but space preferred.
+- Canonical `skills/` → symlinks `.claude/.codex/.opencode/.agents/skills` + `scripts/sync-skills.sh` for Windows.
 
 ---
 
 ## Roadmap
 
-- [ ] `AuthController` with PKCE + discovery
-- [ ] JWKS validation + UserInfo
-- [ ] User sync to `usermanagement` DB
-- [ ] Role/group mapping (`groups` claim → Bantingan ACL)
+- [x] `SecureController` with PKCE + discovery (Authentik)
+- [x] JWKS validation + UserInfo (firebase/php-jwt)
+- [x] Modern layout (sticky topbar, card, responsive)
+- [x] Fix `curl_close()` deprecation, Smarty `{` spacing
+- [ ] User sync to `usermanagement` DB (currently only display)
+- [ ] Role/group mapping (`groups` claim → ACL)
 - [ ] Front-channel logout + refresh token rotation
-- [ ] Tests (PHPUnit) for callback validation
+- [ ] Tests (PHPUnit) for callback
 
 ---
 
