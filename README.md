@@ -10,11 +10,8 @@ Demonstrate **OpenID Connect (OIDC)** implementation with the **Bantingan PHP Fr
 
 - [What is OIDC?](#what-is-oidc)
 - [How the Flow Works](#how-the-flow-works)
-- [Architecture of This Demo](#architecture-of-this-demo)
 - [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
 - [Quick Start](#quick-start)
-- [Configuration](#configuration)
 - [Implementing OIDC in Bantingan](#implementing-oidc-in-bantingan)
 - [Security Notes](#security-notes)
 - [Roadmap](#roadmap)
@@ -122,28 +119,6 @@ sequenceDiagram
 
 ---
 
-## Architecture of This Demo
-
-```
-Browser → Caddy (:80) → FrankenPHP (PHP 8.5) → Bantingan (src/Bantingan.php)
-                                           ├─ Controller (app/controllers/* extends Bantingan\Controller)
-                                           ├─ Model (app/models/* extends Bantingan\Model → RedBeanPHP/R)
-                                           ├─ Smarty views (app/views/*)
-                                           └─ Settings (config/web.config.yml → DATABASE_SETTINGS / ROUTE_SETTINGS)
-                                                 │
-                           ┌─────────────────────┼─────────────────────┐
-                           ▼                     ▼                     ▼
-                        MySQL:default      MySQL:usermanagement   Mongo:mongodb
-                        appusermanagement   user                  root@azure.susilon.com:9017
-                           ▲                     ▲
-                           └──── Bantingan\Model R::addDatabase() ────┘
-```
-
-* `Bantingan` bootstraps via `index.php → Settings::LoadFromPath()` (`vendor/susilon/bantingan/src/Settings.php:55`)
-* Multiple DBs supported out of the box (`vendor/susilon/bantingan/src/Model.php:43` — iterates `DATABASE_SETTINGS` and does `R::addDatabase($key, ...)`). Demo ships with 3 connections (see [Configuration](#configuration)).
-
----
-
 ## Tech Stack
 
 | Layer | Choice |
@@ -156,35 +131,6 @@ Browser → Caddy (:80) → FrankenPHP (PHP 8.5) → Bantingan (src/Bantingan.ph
 | DB | MySQL (default), MongoDB |
 | Template | Smarty 4 |
 | Docker | `dunglas/frankenphp:1-php8.5` |
-
----
-
-## Project Structure
-
-```
-.
-├── app/
-│   ├── controllers/HomeController.php   # -> extends Bantingan\Controller, $this->view()
-│   ├── models/                         # -> extends Bantingan\Model, R::addDatabase() multi-DB
-│   └── views/{Home,Shared}/            # Smarty .html
-├── config/
-│   ├── web.config.yml                  # APPLICATION_SETTINGS + load_settings
-│   ├── database.config.yml             # ignored (secrets) — see .example
-│   └── database.config.yml.example     # committed template (3 DBs)
-├── modules/                            # Bantingan modules (e.g. Common\Session\MongoSession)
-├── public/                             # static assets
-├── skills/bantingan-php-app/           # canonical skill source
-├── .claude/skills/bantingan-php-app -> ../../skills/bantingan-php-app  # symlinks (see scripts/sync-skills.sh)
-├── .codex/skills/bantingan-php-app -> ../../skills/bantingan-php-app
-├── .opencode/skills/bantingan-php-app -> ../../skills/bantingan-php-app
-├── .agents/skills/bantingan-php-app -> ../../skills/bantingan-php-app
-├── scripts/sync-skills.sh              # fallback for Windows (cp -R)
-├── Dockerfile                          # FrankenPHP + php extensions (pdo_mysql, mongodb, gd, etc.)
-├── Caddyfile                           # :80 { php_server }
-├── docker/app/entrypoint.sh
-├── index.php                           # Settings::LoadFromPath + Bantingan bootstrap
-└── composer.json
-```
 
 ---
 
@@ -225,64 +171,6 @@ Canonical source is `skills/`. Symlinks are already set up for Claude/Codex/Open
 ```bash
 ./scripts/sync-skills.sh
 ```
-
----
-
-## Configuration
-
-### `config/web.config.yml`
-
-```yaml
-application_settings:
-  SiteTitle: Bantingan App
-  Controllers: app/controllers
-  Models: app/models
-  Views: app/views
-  Module: modules
-  DefaultController: Home
-  RedBeanPHP_Freeze: false
-  # ...
-
-load_settings:
-  route_settings: route.config.yml
-  database_settings: database.config.yml
-```
-
-Env overrides supported: `BANTINGAN3_<KEY>` JSON (see `src/Settings.php:44`).
-
-### `config/database.config.yml` (multiple SQL servers)
-
-```yaml
-# default database
-default:
-  type: mysql
-  server: mysql
-  user: user
-  password: user
-  database: appusermanagement
-
-# second database, e.g. central user store
-usermanagement:
-  type: mysql
-  server: mysql
-  user: user
-  password: user
-  database: user
-
-# optional — e.g. session store
-mongodb:
-  type: mongo
-  server: azure.susilon.com:9017
-  user: root
-  password: root
-  database: root
-```
-
-This file is **gitignored** (`/.gitignore:27`). Commit only `database.config.yml.example`. The framework loops `DATABASE_SETTINGS` (`src/Model.php:43`) and registers each via `R::addDatabase($key, $dsn, $user, $pass)`. Use `$this->selectedDB = 'usermanagement'` in a model to switch.
-
-### `.gitignore`
-
-Vendor, `templates_c/`, `tmp/`, `.env`, `config/database.config.yml`, IDE/OS files are ignored (see `.gitignore:1`).
 
 ---
 
