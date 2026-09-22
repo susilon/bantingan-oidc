@@ -24,12 +24,16 @@ composer.phar
 
 # Database credentials - multiple DB supported (src/Model.php:43)
 # Keep example tracked, ignore real credentials
+/config/web.config.yml
 /config/database.config.yml
+/config/route.config.yml
 /config/oidc.config.yml
 /config/*.local.yml
 /config/database.local.yml
 # keep example
+!config/web.config.yml.example
 !config/database.config.yml.example
+!config/route.config.yml.example
 !config/oidc.config.yml.example
 
 # OS
