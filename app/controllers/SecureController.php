@@ -244,10 +244,20 @@ class SecureController extends Controller
         $cfg['client_id'] = getenv('OIDC_CLIENT_ID') ?: ($cfg['client_id'] ?? '');
         $cfg['client_secret'] = getenv('OIDC_CLIENT_SECRET') ?: ($cfg['client_secret'] ?? '');
         $cfg['redirect_uri'] = getenv('OIDC_REDIRECT_URI') ?: ($cfg['redirect_uri'] ?? $this->baseUrl() . '/Secure/callback');
-        $cfg['scopes'] = $cfg['scopes'] ?? 'openid email profile';
-        $cfg['post_logout_redirect_uri'] = $cfg['post_logout_redirect_uri'] ?? $this->baseUrl() . '/';
-        $cfg['verify_jwt'] = isset($cfg['verify_jwt']) ? (bool)$cfg['verify_jwt'] : true;
-        $cfg['end_session_endpoint'] = $cfg['end_session_endpoint'] ?? '';
+        $cfg['scopes'] = getenv('OIDC_SCOPES') ?: ($cfg['scopes'] ?? 'openid email profile');
+        $cfg['post_logout_redirect_uri'] = getenv('OIDC_POST_LOGOUT_REDIRECT_URI') ?: ($cfg['post_logout_redirect_uri'] ?? $this->baseUrl() . '/');
+        $verifyJwtEnv = getenv('OIDC_VERIFY_JWT');
+        if ($verifyJwtEnv !== false && $verifyJwtEnv !== '') {
+            $parsed = filter_var($verifyJwtEnv, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            $cfg['verify_jwt'] = $parsed ?? (bool)$verifyJwtEnv;
+        } else {
+            $cfg['verify_jwt'] = isset($cfg['verify_jwt'])
+                ? (is_string($cfg['verify_jwt'])
+                    ? (filter_var($cfg['verify_jwt'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool)$cfg['verify_jwt'])
+                    : (bool)$cfg['verify_jwt'])
+                : true;
+        }
+        $cfg['end_session_endpoint'] = getenv('OIDC_END_SESSION_ENDPOINT') ?: ($cfg['end_session_endpoint'] ?? '');
 
         return $cfg;
     }
