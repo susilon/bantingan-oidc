@@ -16,11 +16,5 @@
     "prefer-stable": false,
     "config": {
         "github-protocols": ["https"]
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "app/",
-            "Modules\\": "modules/"
-        }
     }
 }
