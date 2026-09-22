@@ -24,8 +24,8 @@ table th, table td { border:1px solid #ddd; padding:8px; text-align:left; }
     <h3>User Info (from ID Token / UserInfo — not persisted)</h3>
     <table>
       <tr><th>Field</th><th>Value</th></tr>
-      {foreach $user as $k => $v}
-        <tr><td>{$k}</td><td>{if is_array($v) || is_object($v)}{$v|@json_encode}{else}{$v}{/if}</td></tr>
+      {foreach $userRows as $k => $v}
+        <tr><td>{$k}</td><td>{$v}</td></tr>
       {/foreach}
     </table>
 

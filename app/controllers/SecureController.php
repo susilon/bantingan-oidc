@@ -51,6 +51,13 @@ class SecureController extends Controller
         $this->viewBag->accessToken = $_SESSION['access_token'] ?? null;
         $this->viewBag->claims = $_SESSION['id_token_claims'] ?? null;
         $this->viewBag->pageTitle = 'Secure Area';
+        // Pre-flatten user fields for display so the template needs no
+        // is_array/is_object checks (unregistered Smarty functions are deprecated).
+        $userRows = [];
+        foreach ((array)$_SESSION['oidc_user'] as $k => $v) {
+            $userRows[$k] = (is_array($v) || is_object($v)) ? json_encode($v) : $v;
+        }
+        $this->viewBag->userRows = $userRows;
         return $this->view();
     }
 
