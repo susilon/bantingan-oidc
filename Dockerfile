@@ -24,8 +24,8 @@ RUN install-php-extensions \
     gd \
     intl \
     zip \
-    mongodb \
-    redis \
+#    mongodb \
+#    redis \
     opcache
 
 # ── Composer ─────────────────────────────────────────────────────────
